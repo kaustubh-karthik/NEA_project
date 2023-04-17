@@ -2,6 +2,7 @@ import pygame
 from enum import IntEnum
 from random import randint
 import numpy as np
+import simpleaudio as sa
 
 
 # Setup
@@ -55,12 +56,12 @@ class Note(pygame.sprite.Sprite):
     def generate_notes(num_notes):
         for _ in range(num_notes):
             Note()
-        print(Note.note_group.sprites())
+        #print(Note.note_group.sprites())
         
     def generate_timed_notes(clock_time):
         if clock_time in Note.note_times*1000:
             Note.generate_notes(1)
-            print(clock_time)
+            #print(clock_time)
     
     def note_movement():
         for sprite in Note.note_group.sprites():
@@ -70,7 +71,14 @@ class Note(pygame.sprite.Sprite):
     def render_background():
         screen.blit(Note.bg_image, (0, 0))
         
+
+wave_obj = sa.WaveObject.from_wave_file("pasoori.wav")
+wave_obj.play()
+
+
 while True:
+    print(clock.get_fps())
+    clock.tick()
     Note.render_background()
     Note.generate_timed_notes(pygame.time.get_ticks())
     Note.note_movement()
