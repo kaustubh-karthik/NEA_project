@@ -1,6 +1,7 @@
 import pygame
 from enum import IntEnum
 from random import randint
+import numpy as np
 
 
 # Setup
@@ -8,8 +9,8 @@ pygame.init()
 clock = pygame.time.Clock()
 
 # Main Window setup
-screen_width = 1280
-screen_height = 960
+screen_width = 1024
+screen_height = 1024
 screen = pygame.display.set_mode((screen_width,screen_height))
 pygame.display.set_caption('NEA Rhythm Game')
 
@@ -29,7 +30,10 @@ class Note(pygame.sprite.Sprite):
     spawn_positions = [SpawnPos.ln0, SpawnPos.ln1, SpawnPos.ln2, SpawnPos.ln3, SpawnPos.ln4]
     note_width = lane_size
     note_height = screen_height//10
-#
+    note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")
+    bg_image = pygame.image.load("notes_falling.jpg")
+    print(note_times)
+    
 
     def __init__(self) -> None:
         super().__init__()
@@ -53,11 +57,24 @@ class Note(pygame.sprite.Sprite):
             Note()
         print(Note.note_group.sprites())
         
-
-Note.generate_notes(2)
-Note.draw_notes()
-
+    def generate_timed_notes(clock_time):
+        if clock_time in Note.note_times*1000:
+            Note.generate_notes(1)
+            print(clock_time)
+    
+    def note_movement():
+        for sprite in Note.note_group.sprites():
+            sprite.rect.y += 1
+        Note.note_group.update()
+    
+    def render_background():
+        screen.blit(Note.bg_image, (0, 0))
+        
 while True:
+    Note.render_background()
+    Note.generate_timed_notes(pygame.time.get_ticks())
+    Note.note_movement()
+    Note.draw_notes()
     pygame.display.update()
 
     
