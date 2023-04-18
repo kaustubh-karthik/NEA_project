@@ -61,14 +61,18 @@ distinct_tps = np.asarray(sorted(list(set(np.round(turning_points_seconds, round
 with open("turning_points.txt", 'w') as tps:
   distinct_tps.tofile(tps, sep=', ')
 
+# Writing to a separate folder holding the log of testing
+with open(f"beat_finding_graphs_txts/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}.txt", "w") as tps:
+  distinct_tps.tofile(tps, sep=', ')
+
 # Plotting graphs for debugging
 plt.figure(figsize=(20,5))
 plt.plot(times, fft_smoothed)
 # Creating a dotted graph with dots at zero, and x coordinates at the turing points
 plt.plot(distinct_tps, np.zeros(len(distinct_tps)), '.')
 plt.plot(times, smoothed_gradient, color="r")
-plt.show()
+plt.savefig(f"beat_finding_graphs_txts/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}.png", format="png")
 
 # Prints the times(in seconds) of distinct turning points - for debugging
-print("Turning points: ", distinct_tps)
-print(f"Num Turning points: {len(distinct_tps)}")
+'''print("Turning points: ", distinct_tps)
+print(f"Num Turning points: {len(distinct_tps)}")'''
