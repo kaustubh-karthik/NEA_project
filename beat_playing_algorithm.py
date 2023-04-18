@@ -12,10 +12,9 @@ with wave.open("bonk_sound.wav", "rb") as wav_obj:
   sample_width = wav_obj.getsampwidth()
   signal_wave = wav_obj.readframes(n_samples)
 
+
 signal_wave = abs(np.frombuffer(signal_wave, dtype=np.int16))
-print(signal_wave)
 signal_wave = signal_wave * 100
-print(signal_wave)
 
 note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")
 
