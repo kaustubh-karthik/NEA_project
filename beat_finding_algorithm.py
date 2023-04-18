@@ -30,6 +30,7 @@ signal_smoothed = scipy.signal.fftconvolve(signal_array, filt, mode="same")
 
 # Creates an array corresponding to the time of each audio sample
 # Creates array of length n_samples, with values going from 0 to signal_length
+# Creates array of length n_samples, with values going from 0 to signal_length
 times = np.linspace(0, signal_length, num=n_samples)
 
 # Creates a Fast Fourier Transform of the smoothed signal array
@@ -40,8 +41,10 @@ signal_stripped_fft = signal_fft
 signal_stripped_fft[100:] = 0
 
 fft_smoothed = np.fft.ifft(signal_stripped_fft) # Converts the array of coefficients back to an array of y coordinates
+fft_smoothed = np.fft.ifft(signal_stripped_fft) # Converts the array of coefficients back to an array of y coordinates
 conv_smoothed = scipy.signal.fftconvolve(fft_smoothed, filt, mode="same") # secondary smoothing
 
+# Calculating difference in length caused by moving average calculation
 # Calculating difference in length caused by moving average calculation
 times_len = len(times)
 wave_len = len(conv_smoothed)
@@ -67,6 +70,7 @@ with open("turning_points.txt", 'w') as tps:
 with open(f"beat_finding_graphs_txts/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}.txt", "w") as tps:
   distinct_tps.tofile(tps, sep=', ')
 
+# Plotting graphs for debugging
 # Plotting graphs for debugging
 plt.figure(figsize=(20,5))
 plt.plot(times, fft_smoothed)
