@@ -18,7 +18,7 @@ signal_array = abs(np.frombuffer(signal_wave, dtype=np.int16))
 signal_length = n_samples/sample_freq # In seconds
 
 # Smoothes the wave signal to allow for easier data analysis
-filt_num = sample_freq
+filt_num = sample_freq # Higher value increases smoothing
 filt = np.ones(filt_num)/filt_num # Creates an array of length filt num, with values of 1/filt num
 # Calculates a moving average over filt_num values
 signal_smoothed = scipy.signal.fftconvolve(signal_array, filt, mode="same")
@@ -47,13 +47,15 @@ half_diff = (times_len - wave_len)//2
 smoothed_gradient = np.gradient(conv_smoothed, times).real
 # Turning points are where gradient is equal to 0
 # Need to round as computer will never be accurate enough to know when it is exactly equal to 0
-turning_points = np.where(np.round(smoothed_gradient, 1) == 0)[0]
+decimal_places = 1 # Higher value reduces amount of zeroes
+turning_points = np.where(np.round(smoothed_gradient, decimal_places) == 0)[0]
 turning_points_seconds = turning_points/sample_freq # Calculating signal length
 
 # rounding all numbers to 1 decimal place, any duplicates will automatically be deleted when converting to a set
 # Conversion back to list allows for sorting the values
 # Conversion back to array allows for easier writing to file
-distinct_tps = np.asarray(sorted(list(set(np.round(turning_points_seconds, 1)))))
+rounding_diff = 1 # Higher values increase the amount of duplicates
+distinct_tps = np.asarray(sorted(list(set(np.round(turning_points_seconds, rounding_diff)))))
 
 # Writing all values to a file, separated by ", "
 with open("turning_points.txt", 'w') as tps:
@@ -69,3 +71,4 @@ plt.show()
 
 # Prints the times(in seconds) of distinct turning points - for debugging
 print("Turning points: ", distinct_tps)
+print(f"Num Turning points: {len(distinct_tps)}")
