@@ -3,9 +3,10 @@ from enum import IntEnum
 from random import randint
 import numpy as np
 import simpleaudio as sa
+import queue as queue
 
 
-wav_file_name = "mono_mate"
+wav_file_name = "pasoori"
 
 def run():
     # Setup
@@ -19,7 +20,7 @@ def run():
     pygame.display.set_caption('NEA Rhythm Game')
 
     # Initialising lanes
-    lanes = 5
+    lanes = 6
     lane_size = screen_width//lanes
 
     # Enum to store the x positions of lanes
@@ -29,14 +30,18 @@ def run():
         ln2 = lane_size*2
         ln3 = lane_size*3
         ln4 = lane_size*4
+        ln5 = lane_size*5
 
     # Main class
     class Note(pygame.sprite.Sprite):
 
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
+        note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
+        
+        spawn_track = [queue.Queue() for _ in range(lane_size)]
         # Array of spawn positions allows me to randomly select a spawn position
-        spawn_positions = [SpawnPos.ln0, SpawnPos.ln1, SpawnPos.ln2, SpawnPos.ln3, SpawnPos.ln4]
+        spawn_positions = [pos for pos in SpawnPos]
         
         # Note calculations
         note_width = lane_size
@@ -51,7 +56,8 @@ def run():
             super().__init__()
             
             # Overriding super() class variables
-            random_spawn = Note.get_random_spawn()
+            random_spawn, index = Note.get_random_spawn()
+            self.ln = index
             # Base rect
             self.rect = pygame.Rect(random_spawn, 0, Note.note_width, Note.note_height)
             
@@ -59,10 +65,12 @@ def run():
             self.image = pygame.Surface((Note.note_width, Note.note_height))
             self.image.fill((255, 255, 255)) # Adding color to image(white)
             Note.add_to_group(self) # Adding to sprite group
+            Note.spawn_track[index].put(self)
         
         # Randomly selects an array value
         def get_random_spawn() -> SpawnPos:
-            return Note.spawn_positions[randint(0, 4)]
+            rand_num = randint(0, lanes-1)
+            return Note.spawn_positions[rand_num], rand_num
         
         # Adds to group
         def add_to_group(note_rect):
@@ -80,7 +88,7 @@ def run():
         # Generates a note at the correct point(needs to be called in main game loop)        
         def generate_timed_notes(clock_time):
             # Checks if the game time(ms) is equal to any time in the note_times array
-            if clock_time in (Note.note_times*1000).astype(int):
+            if clock_time in (Note.note_times*1000 - 150).astype(int):
                 Note.generate_notes(1)
                 print(clock_time)
 
@@ -91,12 +99,16 @@ def run():
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():
                 sprite.rect.y += speed
+                if not screen.get_rect().contains(sprite.rect):
+                    sprite.kill()
+                    Note.spawn_track[sprite.ln].get().kill()
+                    #print("you lost", pygame.time.get_ticks())
+                    
             Note.note_group.update() # Updates all sprites in group
         
         # Blits the background image onto the screen at coords (0,0) - top left
         def render_background():
             screen.blit(Note.bg_image, (0, 0))
-
 
     # Starting playback of song
     wave_obj = sa.WaveObject.from_wave_file(f"{wav_file_name}.wav")
@@ -105,11 +117,19 @@ def run():
 
     '''---------------Main game loop------------------'''
     while True:
-        clock.tick() # Starting game timer
+        clock.tick(2000) # Starting game timer
         Note.render_background()
         Note.generate_timed_notes(pygame.time.get_ticks())
         Note.note_movement()
         Note.draw_notes()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                for ln_queue, key in zip(Note.spawn_track, Note.note_keys):
+                    if event.key == key:
+                        if not ln_queue.empty():
+                            ln_queue.get().kill()
+        
         pygame.display.update()
 
 if __name__ == "__main__":

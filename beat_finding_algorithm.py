@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-wav_file_name = "mono_mate"
-song_bpm = 140
+wav_file_name = "pasoori"
+song_bpm = 92
 
 # Opening wave file as object
 with wave.open(wav_file_name + ".wav", "rb") as wav_obj:
@@ -16,9 +16,9 @@ with wave.open(wav_file_name + ".wav", "rb") as wav_obj:
   signal_wave = wav_obj.readframes(n_samples)
 
 filt_num = sample_freq # Higher value increases smoothing
-coeff_keep = 0 # Increasing this increases the level of detail in the smoothed signal
-decimal_places = 0 # Higher value reduces amount of zeroes
-rounding_diff = 0 # Higher values increase the amount of duplicates
+coeff_keep = 50 # Increasing this increases the level of detail in the smoothed signal
+decimal_places = 1 # Higher value reduces amount of zeroes
+rounding_diff = 1 # Higher values increase the amount of duplicates
 
 def run():
   # Converts a buffer(byte) object to an Int16 numpy array
