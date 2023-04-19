@@ -4,6 +4,9 @@ from random import randint
 import numpy as np
 import simpleaudio as sa
 
+
+wav_file_name = "mono_mate"
+
 def run():
     # Setup
     pygame.init()
@@ -96,15 +99,13 @@ def run():
 
 
     # Starting playback of song
-    wave_obj = sa.WaveObject.from_wave_file("pasoori.wav")
+    wave_obj = sa.WaveObject.from_wave_file(f"{wav_file_name}.wav")
     wave_obj.play()
 
 
     '''---------------Main game loop------------------'''
     while True:
         clock.tick() # Starting game timer
-        if pygame.time.get_ticks() == 60*1000: break
-
         Note.render_background()
         Note.generate_timed_notes(pygame.time.get_ticks())
         Note.note_movement()

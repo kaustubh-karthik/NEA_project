@@ -2,8 +2,10 @@ import wave
 import scipy
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-wav_file_name = "pasoori"
+wav_file_name = "mono_mate"
+song_bpm = 140
 
 # Opening wave file as object
 with wave.open(wav_file_name + ".wav", "rb") as wav_obj:
@@ -52,18 +54,25 @@ def run():
   # Turning points are where gradient is equal to 0
   # Need to round as computer will never be accurate enough to know when it is exactly equal to 0
   turning_points = np.where(np.round(smoothed_gradient, decimal_places) == 0)[0]
-  turning_points_seconds = turning_points/sample_freq # Calculating signal length
+  turning_points_seconds = turning_points/sample_freq # Calculating turning points in seconds
 
   # rounding all numbers to 1 decimal place, any duplicates will automatically be deleted when converting to a set
   # Conversion back to list allows for sorting the values
-  distinct_tps = np.asarray(sorted(list(set(np.round(turning_points_seconds, rounding_diff)))))
+  bpm_beats = np.array([(60/song_bpm)*count for count in range(2, int(song_bpm*(signal_length/60)))])
+  print(bpm_beats)
+  distinct_tps = np.asarray(sorted(list(set(np.round(np.concatenate((turning_points_seconds, bpm_beats)), rounding_diff)))))
 
   # Writing all values to a file, separated by ", "
   with open("turning_points.txt", 'w') as tps:
     distinct_tps.tofile(tps, sep=', ')
 
   # Writing to a separate folder holding the log of testing
-  with open(f"beat_finding_graphs_txts/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}.txt", "w") as tps:
+  try:
+    os.mkdir(f"C:/Users/Kaustubh Karthik/Documents/Computer_Science/Python_Projects/NEA_project/beat_finding_graphs_txts/{wav_file_name}")
+  except OSError:
+    print(f"{wav_file_name} folder already exists")
+    
+  with open(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.txt", "w") as tps:
     distinct_tps.tofile(tps, sep=', ')
 
   # Plotting graphs for debugging
@@ -72,7 +81,7 @@ def run():
   # Creating a dotted graph with dots at zero, and x coordinates at the turing points
   plt.plot(distinct_tps, np.zeros(len(distinct_tps)), '.')
   plt.plot(times, smoothed_gradient, color="r")
-  plt.savefig(f"beat_finding_graphs_txts/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}.png", format="png")
+  plt.savefig(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.png", format="png")
 
   # Prints the times(in seconds) of distinct turning points - for debugging
   '''print("Turning points: ", distinct_tps)'''
