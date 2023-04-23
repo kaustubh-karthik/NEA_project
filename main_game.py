@@ -1,5 +1,5 @@
 import pygame
-from enum import Enum
+from enum import Enum, auto
 import random
 import numpy as np
 import simpleaudio as sa
@@ -29,21 +29,13 @@ def run():
         x: int
         queue: queue.Queue()
 
-    # Enum to store the x positions of lanes
-    class LaneTracker(Enum):
-        ln0 = Lane(lane_size*0, queue.Queue())
-        ln1 = Lane(lane_size*1, queue.Queue())
-        ln2 = Lane(lane_size*2, queue.Queue())
-        ln3 = Lane(lane_size*3, queue.Queue())
-        ln4 = Lane(lane_size*4, queue.Queue())
-        ln5 = Lane(lane_size*5, queue.Queue())
-
 
     # Main class
     class Note(pygame.sprite.Sprite):
 
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
+        note_tracker = [Lane(lane_size*num_lanes, queue.Queue()) for num_lanes in range(lanes)]
         
         # Note calculations
         note_width = lane_size
@@ -58,7 +50,7 @@ def run():
             super().__init__()
             
             # Initialising lane
-            self.lane = Note.get_random_lane().value
+            self.lane = Note.get_random_lane()
             
             # Overriding super() class variables
             # Base rect
@@ -72,8 +64,8 @@ def run():
             self.add_to_queue() # Adding to queue
         
         # Randomly selects an array value
-        def get_random_lane() -> LaneTracker:
-            return random.choice(list(LaneTracker))
+        def get_random_lane() -> Lane:
+            return random.choice(Note.note_tracker)
         
         # Adds to group
         def add_to_group(self):
