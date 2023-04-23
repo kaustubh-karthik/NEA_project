@@ -6,7 +6,7 @@ import simpleaudio as sa
 import queue as queue
 
 
-wav_file_name = "pasoori"
+wav_file_name = "central_rain"
 
 def run():
     # Setup
@@ -88,13 +88,13 @@ def run():
         # Generates a note at the correct point(needs to be called in main game loop)        
         def generate_timed_notes(clock_time):
             # Checks if the game time(ms) is equal to any time in the note_times array
-            if clock_time in (Note.note_times*1000 - 150).astype(int):
+            if clock_time in (Note.note_times*1000).astype(int):
                 Note.generate_notes(1)
                 print(clock_time)
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
-            speed = 1        
+            speed = 1
 
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():

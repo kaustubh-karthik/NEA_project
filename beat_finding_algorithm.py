@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-wav_file_name = "pasoori"
-song_bpm = 92
+wav_file_name = "losing_my_religion"
+song_bpm = 125
 
 # Opening wave file as object
 with wave.open(wav_file_name + ".wav", "rb") as wav_obj:
