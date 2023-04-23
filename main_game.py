@@ -1,8 +1,10 @@
 import pygame
-from enum import IntEnum
-from random import randint
+from enum import Enum
+import random
 import numpy as np
 import simpleaudio as sa
+import queue
+from dataclasses import dataclass
 
 
 wav_file_name = "mono_mate"
@@ -19,24 +21,29 @@ def run():
     pygame.display.set_caption('NEA Rhythm Game')
 
     # Initialising lanes
-    lanes = 5
+    lanes = 6
     lane_size = screen_width//lanes
+    
+    @dataclass
+    class Lane:
+        x: int
+        queue: queue.Queue()
 
     # Enum to store the x positions of lanes
-    class SpawnPos(IntEnum):
-        ln0 = 0
-        ln1 = lane_size
-        ln2 = lane_size*2
-        ln3 = lane_size*3
-        ln4 = lane_size*4
+    class LaneTracker(Enum):
+        ln0 = Lane(lane_size*0, queue.Queue())
+        ln1 = Lane(lane_size*1, queue.Queue())
+        ln2 = Lane(lane_size*2, queue.Queue())
+        ln3 = Lane(lane_size*3, queue.Queue())
+        ln4 = Lane(lane_size*4, queue.Queue())
+        ln5 = Lane(lane_size*5, queue.Queue())
+
 
     # Main class
     class Note(pygame.sprite.Sprite):
 
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
-        # Array of spawn positions allows me to randomly select a spawn position
-        spawn_positions = [SpawnPos.ln0, SpawnPos.ln1, SpawnPos.ln2, SpawnPos.ln3, SpawnPos.ln4]
         
         # Note calculations
         note_width = lane_size
@@ -50,23 +57,31 @@ def run():
             # Call to super class to initialise this Note instance as a pygame sprite instance
             super().__init__()
             
+            # Initialising lane
+            self.lane = Note.get_random_lane().value
+            
             # Overriding super() class variables
-            random_spawn = Note.get_random_spawn()
             # Base rect
-            self.rect = pygame.Rect(random_spawn, 0, Note.note_width, Note.note_height)
+            self.rect = pygame.Rect(self.lane.x, 0, Note.note_width, Note.note_height)
             
             # Surface to draw rect on
             self.image = pygame.Surface((Note.note_width, Note.note_height))
             self.image.fill((255, 255, 255)) # Adding color to image(white)
-            Note.add_to_group(self) # Adding to sprite group
+            
+            self.add_to_group() # Adding to sprite group
+            self.add_to_queue() # Adding to queue
         
         # Randomly selects an array value
-        def get_random_spawn() -> SpawnPos:
-            return Note.spawn_positions[randint(0, 4)]
+        def get_random_lane() -> LaneTracker:
+            return random.choice(list(LaneTracker))
         
         # Adds to group
-        def add_to_group(note_rect):
-            Note.note_group.add(note_rect)
+        def add_to_group(self):
+            Note.note_group.add(self)
+        
+        # Adds to queue
+        def add_to_queue(self):
+            self.lane.queue.put(self)
         
         # Draws notes to the screen
         def draw_notes():
