@@ -1,12 +1,13 @@
 import pygame
-from enum import IntEnum
-from random import randint
+from enum import Enum, auto
+import random
 import numpy as np
 import simpleaudio as sa
-import queue as queue
+import queue
+from dataclasses import dataclass
 
 
-wav_file_name = "central_rain"
+wav_file_name = "immortals"
 
 def run():
     # Setup
@@ -22,26 +23,24 @@ def run():
     # Initialising lanes
     lanes = 6
     lane_size = screen_width//lanes
-
-    # Enum to store the x positions of lanes
-    class SpawnPos(IntEnum):
-        ln0 = 0
-        ln1 = lane_size
-        ln2 = lane_size*2
-        ln3 = lane_size*3
-        ln4 = lane_size*4
-        ln5 = lane_size*5
+    
+    @dataclass
+    class Lane:
+        x: int
+        queue: queue.Queue
+        key: int
 
     # Main class
     class Note(pygame.sprite.Sprite):
 
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
+
+        # Initialising arrays to keep track of lanes and keys
         note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
+        # Creates Lane instances for each lane
+        lane_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
         
-        spawn_track = [queue.Queue() for _ in range(lane_size)]
-        # Array of spawn positions allows me to randomly select a spawn position
-        spawn_positions = [pos for pos in SpawnPos]
         
         # Note calculations
         note_width = lane_size
@@ -49,32 +48,37 @@ def run():
         
         # Generating list of times for notes to spawn from a txt file
         note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")
-        bg_image = pygame.image.load("notes_falling.jpg") # Loading bg image
+        bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
 
         def __init__(self) -> None:
             # Call to super class to initialise this Note instance as a pygame sprite instance
             super().__init__()
             
+            # Initialising lane
+            self.lane = Note.get_random_lane()
+            
             # Overriding super() class variables
-            random_spawn, index = Note.get_random_spawn()
-            self.ln = index
             # Base rect
-            self.rect = pygame.Rect(random_spawn, 0, Note.note_width, Note.note_height)
+            self.rect = pygame.Rect(self.lane.x, 0, Note.note_width, Note.note_height)
             
             # Surface to draw rect on
             self.image = pygame.Surface((Note.note_width, Note.note_height))
             self.image.fill((255, 255, 255)) # Adding color to image(white)
-            Note.add_to_group(self) # Adding to sprite group
-            Note.spawn_track[index].put(self)
+            
+            self.add_to_group() # Adding to sprite group
+            self.add_to_queue() # Adding to queue
         
         # Randomly selects an array value
-        def get_random_spawn() -> SpawnPos:
-            rand_num = randint(0, lanes-1)
-            return Note.spawn_positions[rand_num], rand_num
+        def get_random_lane() -> Lane:
+            return random.choice(Note.lane_tracker)
         
         # Adds to group
-        def add_to_group(note_rect):
-            Note.note_group.add(note_rect)
+        def add_to_group(self):
+            Note.note_group.add(self)
+        
+        # Adds to queue
+        def add_to_queue(self):
+            self.lane.queue.put(self)
         
         # Draws notes to the screen
         def draw_notes():
@@ -91,6 +95,16 @@ def run():
             if clock_time in (Note.note_times*1000).astype(int):
                 Note.generate_notes(1)
                 print(clock_time)
+                
+        def kill_note_pressed():
+            # Iterates through each lane and checks if their key is being pressed
+            # kills first note in corresponding queue if pressed
+            for lane in Note.lane_tracker:
+                    if event.key == lane.key:
+                        if not lane.queue.empty():
+                            lane.queue.get().kill()
+                            
+
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
@@ -99,11 +113,12 @@ def run():
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():
                 sprite.rect.y += speed
-                if not screen.get_rect().contains(sprite.rect):
+                
+                # Kills the note if it goes off screen
+                if sprite.rect.y > screen_height:
                     sprite.kill()
-                    Note.spawn_track[sprite.ln].get().kill()
-                    #print("you lost", pygame.time.get_ticks())
-                    
+                    sprite.lane.queue.get() # Removes killed reference from queue
+            
             Note.note_group.update() # Updates all sprites in group
         
         # Blits the background image onto the screen at coords (0,0) - top left
@@ -111,13 +126,19 @@ def run():
             screen.blit(Note.bg_image, (0, 0))
 
     # Starting playback of song
-    wave_obj = sa.WaveObject.from_wave_file(f"{wav_file_name}.wav")
+    wave_obj = sa.WaveObject.from_wave_file(f"wav_files/{wav_file_name}.wav")
     wave_obj.play()
 
 
     '''---------------Main game loop------------------'''
     while True:
-        clock.tick(2000) # Starting game timer
+        
+        clock.tick(1000) # Starting game timer
+                
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                Note.kill_note_pressed()
+
         Note.render_background()
         Note.generate_timed_notes(pygame.time.get_ticks())
         Note.note_movement()

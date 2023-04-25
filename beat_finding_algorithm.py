@@ -8,7 +8,7 @@ wav_file_name = "losing_my_religion"
 song_bpm = 125
 
 # Opening wave file as object
-with wave.open(wav_file_name + ".wav", "rb") as wav_obj:
+with wave.open(f"wav_files/{wav_file_name}.wav", "rb") as wav_obj:
   # Getting metadata of wave audio
   sample_freq = wav_obj.getframerate()
   n_samples = wav_obj.getnframes()
@@ -16,6 +16,9 @@ with wave.open(wav_file_name + ".wav", "rb") as wav_obj:
   signal_wave = wav_obj.readframes(n_samples)
 
 filt_num = sample_freq # Higher value increases smoothing
+coeff_keep = 50 # Increasing this increases the level of detail in the smoothed signal
+decimal_places = 1 # Higher value reduces amount of zeroes
+rounding_diff = 1 # Higher values increase the amount of duplicates
 coeff_keep = 50 # Increasing this increases the level of detail in the smoothed signal
 decimal_places = 1 # Higher value reduces amount of zeroes
 rounding_diff = 1 # Higher values increase the amount of duplicates
@@ -59,7 +62,6 @@ def run():
   # rounding all numbers to 1 decimal place, any duplicates will automatically be deleted when converting to a set
   # Conversion back to list allows for sorting the values
   bpm_beats = np.array([(60/song_bpm)*count for count in range(2, int(song_bpm*(signal_length/60)))])
-  print(bpm_beats)
   distinct_tps = np.asarray(sorted(list(set(np.round(np.concatenate((turning_points_seconds, bpm_beats)), rounding_diff)))))
 
   # Writing all values to a file, separated by ", "
@@ -76,6 +78,7 @@ def run():
     distinct_tps.tofile(tps, sep=', ')
 
   print(f"Num Turning points: {len(distinct_tps)}")
+
   '''# Plotting graphs for debugging
   plt.figure(figsize=(20,5))
   plt.plot(times, fft_smoothed)
