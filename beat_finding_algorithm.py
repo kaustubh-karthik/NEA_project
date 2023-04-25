@@ -59,7 +59,6 @@ def run():
   # rounding all numbers to 1 decimal place, any duplicates will automatically be deleted when converting to a set
   # Conversion back to list allows for sorting the values
   bpm_beats = np.array([(60/song_bpm)*count for count in range(2, int(song_bpm*(signal_length/60)))])
-  print(bpm_beats)
   distinct_tps = np.asarray(sorted(list(set(np.round(np.concatenate((turning_points_seconds, bpm_beats)), rounding_diff)))))
 
   # Writing all values to a file, separated by ", "
@@ -75,17 +74,18 @@ def run():
   with open(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.txt", "w") as tps:
     distinct_tps.tofile(tps, sep=', ')
 
-  # Plotting graphs for debugging
+  print(f"Num Turning points: {len(distinct_tps)}")
+
+  '''# Plotting graphs for debugging
   plt.figure(figsize=(20,5))
   plt.plot(times, fft_smoothed)
   # Creating a dotted graph with dots at zero, and x coordinates at the turing points
   plt.plot(distinct_tps, np.zeros(len(distinct_tps)), '.')
   plt.plot(times, smoothed_gradient, color="r")
-  plt.savefig(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.png", format="png")
-
+  plt.savefig(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.png", format="png")'''
   # Prints the times(in seconds) of distinct turning points - for debugging
   '''print("Turning points: ", distinct_tps)'''
-  print(f"Num Turning points: {len(distinct_tps)}")
+
   
 if __name__ == "__main__":
   run()

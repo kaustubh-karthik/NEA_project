@@ -37,7 +37,7 @@ def run():
         note_group = pygame.sprite.Group() # Contains all the note objects
 
         note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
-        note_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
+        lane_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
         
         
         # Note calculations
@@ -68,7 +68,7 @@ def run():
         
         # Randomly selects an array value
         def get_random_lane() -> Lane:
-            return random.choice(Note.note_tracker)
+            return random.choice(Note.lane_tracker)
         
         # Adds to group
         def add_to_group(self):
@@ -94,6 +94,13 @@ def run():
                 Note.generate_notes(1)
                 print(clock_time)
                 
+        def kill_note_pressed():
+            for lane in Note.lane_tracker:
+                    if event.key == lane.key:
+                        if not lane.queue.empty():
+                            lane.queue.get().kill()
+                            
+
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
@@ -102,6 +109,11 @@ def run():
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():
                 sprite.rect.y += speed
+                
+                if sprite.rect.y > screen_height:
+                    sprite.kill()
+                    sprite.lane.queue.get()
+            
             Note.note_group.update() # Updates all sprites in group
         
         # Blits the background image onto the screen at coords (0,0) - top left
@@ -119,21 +131,9 @@ def run():
         
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_s:
-                    print("S")
-                if event.key == pygame.K_d:
-                    print("D")
-                if event.key == pygame.K_f:
-                    print("F")
-                if event.key == pygame.K_j:
-                    print("J")
-                if event.key == pygame.K_k:
-                    print("K")
-                if event.key == pygame.K_l:
-                    print("L")
+                Note.kill_note_pressed()
 
-
-        clock.tick() # Starting game timer
+        clock.tick(1000) # Starting game timer
         Note.render_background()
         Note.generate_timed_notes(pygame.time.get_ticks())
         Note.note_movement()
