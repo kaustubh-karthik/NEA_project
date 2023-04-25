@@ -75,17 +75,17 @@ def run():
   with open(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.txt", "w") as tps:
     distinct_tps.tofile(tps, sep=', ')
 
-'''  # Plotting graphs for debugging
+  print(f"Num Turning points: {len(distinct_tps)}")
+  '''# Plotting graphs for debugging
   plt.figure(figsize=(20,5))
   plt.plot(times, fft_smoothed)
   # Creating a dotted graph with dots at zero, and x coordinates at the turing points
   plt.plot(distinct_tps, np.zeros(len(distinct_tps)), '.')
   plt.plot(times, smoothed_gradient, color="r")
-  plt.savefig(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.png", format="png")
-'''
+  plt.savefig(f"beat_finding_graphs_txts/{wav_file_name}/{str(filt_num)}-{str(coeff_keep)}-{str(decimal_places)}-{str(rounding_diff)}-{str(len(distinct_tps))}-bpm{song_bpm}.png", format="png")'''
   # Prints the times(in seconds) of distinct turning points - for debugging
   '''print("Turning points: ", distinct_tps)'''
-  print(f"Num Turning points: {len(distinct_tps)}")
+
   
 if __name__ == "__main__":
   run()
