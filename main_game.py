@@ -27,15 +27,18 @@ def run():
     @dataclass
     class Lane:
         x: int
-        queue: queue.Queue()
-
+        queue: queue.Queue
+        key: int
 
     # Main class
     class Note(pygame.sprite.Sprite):
 
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
-        note_tracker = [Lane(lane_size*num_lanes, queue.Queue()) for num_lanes in range(lanes)]
+
+        note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
+        note_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
+        
         
         # Note calculations
         note_width = lane_size
@@ -90,6 +93,7 @@ def run():
             if clock_time in (Note.note_times*1000).astype(int):
                 Note.generate_notes(1)
                 print(clock_time)
+                
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
@@ -112,6 +116,23 @@ def run():
 
     '''---------------Main game loop------------------'''
     while True:
+        
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    print("S")
+                if event.key == pygame.K_d:
+                    print("D")
+                if event.key == pygame.K_f:
+                    print("F")
+                if event.key == pygame.K_j:
+                    print("J")
+                if event.key == pygame.K_k:
+                    print("K")
+                if event.key == pygame.K_l:
+                    print("L")
+
+
         clock.tick() # Starting game timer
         Note.render_background()
         Note.generate_timed_notes(pygame.time.get_ticks())
