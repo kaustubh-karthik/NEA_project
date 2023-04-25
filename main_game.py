@@ -36,7 +36,9 @@ def run():
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
 
+        # Initialising arrays to keep track of lanes and keys
         note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
+        # Creates Lane instances for each lane
         lane_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
         
         
@@ -95,6 +97,8 @@ def run():
                 print(clock_time)
                 
         def kill_note_pressed():
+            # Iterates through each lane and checks if their key is being pressed
+            # kills first note in corresponding queue if pressed
             for lane in Note.lane_tracker:
                     if event.key == lane.key:
                         if not lane.queue.empty():
@@ -110,9 +114,10 @@ def run():
             for sprite in Note.note_group.sprites():
                 sprite.rect.y += speed
                 
+                # Kills the note if it goes off screen
                 if sprite.rect.y > screen_height:
                     sprite.kill()
-                    sprite.lane.queue.get()
+                    sprite.lane.queue.get() # Removes killed reference from queue
             
             Note.note_group.update() # Updates all sprites in group
         
@@ -129,11 +134,12 @@ def run():
     '''---------------Main game loop------------------'''
     while True:
         
+        clock.tick(1000) # Starting game timer
+                
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 Note.kill_note_pressed()
 
-        clock.tick(1000) # Starting game timer
         Note.render_background()
         Note.generate_timed_notes(pygame.time.get_ticks())
         Note.note_movement()
