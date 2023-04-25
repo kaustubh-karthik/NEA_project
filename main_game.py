@@ -46,7 +46,7 @@ def run():
         
         # Generating list of times for notes to spawn from a txt file
         note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")
-        bg_image = pygame.image.load("notes_falling.jpg") # Loading bg image
+        bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
 
         def __init__(self) -> None:
             # Call to super class to initialise this Note instance as a pygame sprite instance
@@ -122,7 +122,7 @@ def run():
 
 
     # Starting playback of song
-    wave_obj = sa.WaveObject.from_wave_file(f"{wav_file_name}.wav")
+    wave_obj = sa.WaveObject.from_wave_file(f"wav_files/{wav_file_name}.wav")
     wave_obj.play()
 
 
