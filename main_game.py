@@ -7,7 +7,7 @@ import queue
 from dataclasses import dataclass
 
 
-wav_file_name = "mono_mate"
+wav_file_name = "immortals"
 
 def run():
     # Setup
