@@ -143,14 +143,6 @@ def run():
         Note.generate_timed_notes(pygame.time.get_ticks())
         Note.note_movement()
         Note.draw_notes()
-        
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                for ln_queue, key in zip(Note.spawn_track, Note.note_keys):
-                    if event.key == key:
-                        if not ln_queue.empty():
-                            ln_queue.get().kill()
-        
         pygame.display.update()
 
 if __name__ == "__main__":
