@@ -18,7 +18,7 @@ def run():
     # Main Window setup
     screen_width = 1024
     screen_height = 1024
-    screen = pygame.display.set_mode((screen_width,screen_height))
+    screen = pygame.display.set_mode((screen_width,screen_height), vsync=1)
     pygame.display.set_caption('NEA Rhythm Game')
 
     # Initialising lanes
@@ -139,7 +139,8 @@ def run():
     '''---------------Main game loop------------------'''
     while True:
         
-        clock.tick(60) # Starting game timer
+        clock.tick(75) # Starting game timer
+        print(clock.get_fps())
         
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
