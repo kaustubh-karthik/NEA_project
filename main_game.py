@@ -5,6 +5,7 @@ import numpy as np
 import simpleaudio as sa
 import queue
 from dataclasses import dataclass
+from collections import deque
 
 
 wav_file_name = "sweet_dreams"
@@ -17,7 +18,7 @@ def run():
     # Main Window setup
     screen_width = 1024
     screen_height = 1024
-    screen = pygame.display.set_mode((screen_width,screen_height))
+    screen = pygame.display.set_mode((screen_width,screen_height), vsync=1)
     pygame.display.set_caption('NEA Rhythm Game')
 
     # Initialising lanes
@@ -47,7 +48,10 @@ def run():
         note_height = screen_height//10
         
         # Generating list of times for notes to spawn from a txt file
-        note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")
+        note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")*1000
+        note_queue = deque(note_times)
+        next_note = note_queue.popleft()
+        
         bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
 
         def __init__(self) -> None:
@@ -92,9 +96,11 @@ def run():
         # Generates a note at the correct point(needs to be called in main game loop)        
         def generate_timed_notes(clock_time):
             # Checks if the game time(ms) is equal to any time in the note_times array
-            if clock_time in (Note.note_times*1000).astype(int):
-                Note.generate_notes(1)
-                print(clock_time)
+            for i, note_time in enumerate((Note.note_times*1000).astype(int)):
+                if clock_time >= Note.next_note:
+                    Note.next_note = Note.note_queue.popleft()
+                    Note.generate_notes(1)
+                    
                 
         def kill_note_pressed():
             # Iterates through each lane and checks if their key is being pressed
@@ -108,7 +114,7 @@ def run():
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
-            speed = 1
+            speed = 5
 
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():
@@ -133,8 +139,8 @@ def run():
     '''---------------Main game loop------------------'''
     while True:
         
-        clock.tick(1000) # Starting game timer
-                
+        clock.tick(75) # Starting game timer
+        
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 Note.kill_note_pressed()
