@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from collections import deque
 
 
-wav_file_name = "sweet_dreams"
+wav_file_name = "message_bottle"
 
 def run():
     # Setup
@@ -140,7 +140,6 @@ def run():
     while True:
         
         clock.tick(75) # Starting game timer
-        print(clock.get_fps())
         
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
