@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from collections import deque
 
 
-wav_file_name = "sweet_dreams"
+wav_file_name = "nothing_holding"
 
 def run():
     # Setup
@@ -97,7 +97,7 @@ def run():
         def generate_timed_notes(clock_time):
             # Checks if the game time(ms) is equal to any time in the note_times array
             for i, note_time in enumerate((Note.note_times*1000).astype(int)):
-                if clock_time >= Note.next_note:
+                if clock_time >= Note.next_note - 2500:
                     Note.next_note = Note.note_queue.popleft()
                     Note.generate_notes(1)
                     
@@ -140,7 +140,6 @@ def run():
     while True:
         
         clock.tick(75) # Starting game timer
-        print(clock.get_fps())
         
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
