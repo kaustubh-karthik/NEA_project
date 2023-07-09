@@ -1,4 +1,5 @@
 import pygame
+import sys
 from enum import Enum, auto
 import random
 import numpy as np
@@ -142,6 +143,9 @@ def run():
         clock.tick(75) # Starting game timer
         
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.KEYDOWN:
                 Note.kill_note_pressed()
 
