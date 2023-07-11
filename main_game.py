@@ -1,12 +1,10 @@
 import pygame
 import sys
-from enum import Enum, auto
 import random
 import numpy as np
 import simpleaudio as sa
 import queue
 from dataclasses import dataclass
-from collections import deque
 
 
 wav_file_name = "message_bottle"
@@ -49,10 +47,9 @@ def run():
         note_height = screen_height//10
         
         # Generating list of times for notes to spawn from a txt file
-        note_times = np.genfromtxt("turning_points.txt", delimiter = ", ")*1000
-        note_queue = deque(note_times)
-        next_note = note_queue.popleft()
+        note_times = (np.genfromtxt("turning_points.txt", delimiter = ", ")*1000).astype(int)
         
+        # Loading background image
         bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
 
         def __init__(self) -> None:
@@ -95,22 +92,24 @@ def run():
                 Note()
 
         # Generates a note at the correct point(needs to be called in main game loop)        
-        def generate_timed_notes(clock_time):
-            # Checks if the game time(ms) is equal to any time in the note_times array
-            for i, note_time in enumerate((Note.note_times*1000).astype(int)):
-                if clock_time >= Note.next_note:
-                    Note.next_note = Note.note_queue.popleft()
-                    Note.generate_notes(1)
-                    
-                
+        def generate_timed_notes(clock):
+            # Checks if any of the notes are inbetween this tick and the previous tick
+            current_time = pygame.time.get_ticks()
+            # Creates an array of a range of times that the note can be in
+            accepted_times = np.asarray(list(range(current_time - clock.get_time(), current_time)))
+            # Creates an array of booleans of whether an element matches another
+            matched_elements = np.isin(Note.note_times, accepted_times)
+            # Generates the same number of notes as the matched elements
+            Note.generate_notes(np.count_nonzero(matched_elements))
+                 
+                 
         def kill_note_pressed():
             # Iterates through each lane and checks if their key is being pressed
             # kills first note in corresponding queue if pressed
             for lane in Note.lane_tracker:
-                    if event.key == lane.key:
-                        if not lane.queue.empty():
-                            lane.queue.get().kill()
-                            
+                if event.key == lane.key:
+                    if not lane.queue.empty():
+                        lane.queue.get().kill()
 
 
         # Makes every note in the sprite group move down at a consistant speed    
@@ -127,6 +126,7 @@ def run():
                     sprite.lane.queue.get() # Removes killed reference from queue
             
             Note.note_group.update() # Updates all sprites in group
+        
         
         # Blits the background image onto the screen at coords (0,0) - top left
         def render_background():
@@ -150,7 +150,7 @@ def run():
                 Note.kill_note_pressed()
 
         Note.render_background()
-        Note.generate_timed_notes(pygame.time.get_ticks())
+        Note.generate_timed_notes(clock)
         Note.note_movement()
         Note.draw_notes()
         pygame.display.update()
