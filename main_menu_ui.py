@@ -23,6 +23,7 @@ def run():
     play_button.place(x=270, y=430)
 
     settings_screen = tk.Toplevel(screen)
+    settings_screen.withdraw()
     settings_window = tk.Frame(settings_screen)
     settings_window.pack()
     title = tk.Label(settings_screen, text="SETTINGS PAGE", font=("Arial", 24))
@@ -32,7 +33,6 @@ def run():
     fps_label.pack()
     fps_box = tk.Entry(settings_screen)
     fps_box.pack()
-    print(fps_box)
     
     note_speed_label = tk.Label(settings_screen, text="choose note_speed: ", font=("Arial", 24))
     note_speed_label.pack()
@@ -55,9 +55,6 @@ def run():
     settings_image = tk.PhotoImage(file = "bg_images/settingsbutton.png")
     settings_button = tk.Button(main_menu, command=settings_screen.deiconify, image=settings_image, width=100, height=100)
     settings_button.place(x=850, y=75)
-    
-    
-    
     
     screen.mainloop()
 
