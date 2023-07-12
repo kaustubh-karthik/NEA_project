@@ -126,6 +126,9 @@ def run():
         mp_hands = mp.solutions.hands
         hands = mp_hands.Hands()
         
+        fixed_y = True
+        fixed_y_coord = 800
+        
         def get_hand_landmarks():
             success, img = HandTracking.capture.read()
             rgb_img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -134,23 +137,38 @@ def run():
 
             return results.multi_hand_landmarks            
                         
+    
         def landmark_iteration():
             hand_landmarks = HandTracking.get_hand_landmarks()
 
             if hand_landmarks:
                 for hand in hand_landmarks:
+                    index_finger = hand.landmark[8]
+                    
                     for lm in hand.landmark:
-                        centre_x, centre_y = lm.x*screen_width, lm.y*screen_height
+                        centre_x = lm.x*screen_width
+                        centre_y = lm.y*screen_height
+                        
+                        if HandTracking.fixed_y:
+                            y_offset = index_finger.y*screen_height - HandTracking.fixed_y_coord
+                            centre_y -= y_offset
+                            
                         pygame.draw.circle(screen, (255, 0, 255), (centre_x, centre_y), 5)
                         
-                    index_finger = hand.landmark[8]
-                    HandTracking.hand_collision(index_finger)
-                
                     
-        def hand_collision(index_pos):
-            for note in Note.note_group.sprites():
-                if note.rect.collidepoint((index_pos.x*screen_width, index_pos.y*screen_height)):
-                    print(note)
+                    HandTracking.hand_collision(index_finger)
+
+            
+            
+
+        def hand_collision(index_finger):
+            for note in Note.note_group.sprites():#
+                index_x, index_y = index_finger.x*screen_width, index_finger.y*screen_height
+                
+                if HandTracking.fixed_y and note.rect.collidepoint((index_x, HandTracking.fixed_y_coord)):
+                    note.kill()
+                    note.lane.queue.get()
+                elif note.rect.collidepoint((index_x, index_y)) and not HandTracking.fixed_y:
                     note.kill()
                     note.lane.queue.get()
         
