@@ -1,10 +1,9 @@
-import pygame
-import sys
-import random
+import pygame, sys, random, queue
 import numpy as np
 import simpleaudio as sa
-import queue
 from dataclasses import dataclass
+import cv2 as cv
+import mediapipe as mp
 
 
 wav_file_name = "message_bottle"
@@ -35,6 +34,8 @@ def run():
 
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
+        # Initialising speed
+        speed = 5
 
         # Initialising arrays to keep track of lanes and keys
         note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
@@ -49,9 +50,6 @@ def run():
         # Generating list of times for notes to spawn from a txt file
         note_times = (np.genfromtxt("turning_points.txt", delimiter = ", ")*1000).astype(int)
         
-        # Loading background image
-        bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
-
         def __init__(self) -> None:
             # Call to super class to initialise this Note instance as a pygame sprite instance
             super().__init__()
@@ -93,14 +91,11 @@ def run():
 
         # Generates a note at the correct point(needs to be called in main game loop)        
         def generate_timed_notes(clock):
-            # Checks if any of the notes are inbetween this tick and the previous tick
-            current_time = pygame.time.get_ticks()
-            # Creates an array of a range of times that the note can be in
-            accepted_times = np.asarray(list(range(current_time - clock.get_time(), current_time)))
-            # Creates an array of booleans of whether an element matches another
-            matched_elements = np.isin(Note.note_times, accepted_times)
-            # Generates the same number of notes as the matched elements
-            Note.generate_notes(np.count_nonzero(matched_elements))
+            
+            current_time = pygame.time.get_ticks() # Checks if any of the notes are inbetween this tick and the previous tick
+            accepted_times = np.asarray(list(range(current_time - clock.get_time(), current_time))) # Creates an array of a range of times that the note can be in
+            matched_elements = np.isin(Note.note_times, accepted_times) # Creates an array of booleans of whether an element matches another
+            Note.generate_notes(np.count_nonzero(matched_elements)) # Generates the same number of notes as the matched elements
                  
                  
         def kill_note_pressed():
@@ -110,15 +105,13 @@ def run():
                 if event.key == lane.key:
                     if not lane.queue.empty():
                         lane.queue.get().kill()
-
+                        
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
-            speed = 5
-
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():
-                sprite.rect.y += speed
+                sprite.rect.y += Note.speed
                 
                 # Kills the note if it goes off screen
                 if sprite.rect.y > screen_height:
@@ -126,21 +119,71 @@ def run():
                     sprite.lane.queue.get() # Removes killed reference from queue
             
             Note.note_group.update() # Updates all sprites in group
+
+    class HandTracking:
+        capture = cv.VideoCapture(0)
+
+        mp_hands = mp.solutions.hands
+        hands = mp_hands.Hands()
+        
+        def get_hand_landmarks():
+            success, img = HandTracking.capture.read()
+            rgb_img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+            rgb_img = cv.flip(rgb_img, 1)
+            results = HandTracking.hands.process(rgb_img)
+
+            return results.multi_hand_landmarks            
+                        
+        def landmark_iteration():
+            hand_landmarks = HandTracking.get_hand_landmarks()
+
+            if hand_landmarks:
+                for hand in hand_landmarks:
+                    for lm in hand.landmark:
+                        centre_x, centre_y = lm.x*screen_width, lm.y*screen_height
+                        pygame.draw.circle(screen, (255, 0, 255), (centre_x, centre_y), 5)
+                        
+                    index_finger = hand.landmark[8]
+                    HandTracking.hand_collision(index_finger)
+                
+                    
+        def hand_collision(index_pos):
+            for note in Note.note_group.sprites():
+                if note.rect.collidepoint((index_pos.x*screen_width, index_pos.y*screen_height)):
+                    print(note)
+                    note.kill()
+                    note.lane.queue.get()
         
         
+
+    class GameManager:
+        
+        # Initialising fps
+        fps = 75
+        
+        # Loading background image
+        bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
+
         # Blits the background image onto the screen at coords (0,0) - top left
         def render_background():
-            screen.blit(Note.bg_image, (0, 0))
-
-    # Starting playback of song
-    wave_obj = sa.WaveObject.from_wave_file(f"wav_files/{wav_file_name}.wav")
-    wave_obj.play()
-
-
+            screen.blit(GameManager.bg_image, (0, 0))
+        
+        def start_playback():
+            # Starting playback of song
+            wave_obj = sa.WaveObject.from_wave_file(f"wav_files/{wav_file_name}.wav")
+            wave_obj.play()
+        
+        def read_vars():
+            with open("settings_vars.txt", "r") as vars:
+                GameManager.fps, Note.speed = [int(x) for x in vars.readline().split()]
+        
+    # Initialising variables
+    GameManager.read_vars()
+    
     '''---------------Main game loop------------------'''
     while True:
         
-        clock.tick(75) # Starting game timer
+        clock.tick(GameManager.fps) # Starting game timer
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -149,7 +192,8 @@ def run():
             if event.type == pygame.KEYDOWN:
                 Note.kill_note_pressed()
 
-        Note.render_background()
+        GameManager.render_background()
+        HandTracking.landmark_iteration()
         Note.generate_timed_notes(clock)
         Note.note_movement()
         Note.draw_notes()
