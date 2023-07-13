@@ -38,10 +38,12 @@ def run():
         speed = 5
 
         # Initialising arrays to keep track of lanes and keys
-        note_keys = [pygame.K_s, pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k, pygame.K_l]
+        right_hand_keys = "hjklyuio"
+        left_hand_keys = "fdsarewq"
+        note_keys = [eval(f"pygame.K_{key}") for key in left_hand_keys[:lanes//2][::-1] + right_hand_keys[:lanes//2]]
+        
         # Creates Lane instances for each lane
         lane_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
-        
         
         # Note calculations
         note_width = lane_size
@@ -105,7 +107,6 @@ def run():
                 if event.key == lane.key:
                     if not lane.queue.empty():
                         lane.queue.get().kill()
-                        
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
@@ -135,8 +136,7 @@ def run():
             rgb_img = cv.flip(rgb_img, 1)
             results = HandTracking.hands.process(rgb_img)
 
-            return results.multi_hand_landmarks            
-                        
+            return results.multi_hand_landmarks           
     
         def landmark_iteration():
             hand_landmarks = HandTracking.get_hand_landmarks()
@@ -153,25 +153,19 @@ def run():
                             y_offset = index_finger.y*screen_height - HandTracking.fixed_y_coord
                             centre_y -= y_offset
                             
-                        pygame.draw.circle(screen, (255, 0, 255), (centre_x, centre_y), 5)
-                        
-                    
+                        pygame.draw.circle(screen, (255, 0, 255), (centre_x, centre_y), 5)                     
                     HandTracking.hand_collision(index_finger)
 
-            
-            
-
         def hand_collision(index_finger):
-            for note in Note.note_group.sprites():#
+            for note in Note.note_group.sprites():
                 index_x, index_y = index_finger.x*screen_width, index_finger.y*screen_height
                 
-                if HandTracking.fixed_y and note.rect.collidepoint((index_x, HandTracking.fixed_y_coord)):
+                if HandTracking.fixed_y:
+                    index_y = HandTracking.fixed_y_coord
+
+                if note.rect.collidepoint((index_x, index_y)):
                     note.kill()
                     note.lane.queue.get()
-                elif note.rect.collidepoint((index_x, index_y)) and not HandTracking.fixed_y:
-                    note.kill()
-                    note.lane.queue.get()
-        
         
 
     class GameManager:
@@ -197,6 +191,7 @@ def run():
         
     # Initialising variables
     GameManager.read_vars()
+    GameManager.start_playback()
     
     '''---------------Main game loop------------------'''
     while True:
