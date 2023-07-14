@@ -39,13 +39,19 @@ def run():
     note_speed_box = tk.Entry(settings_screen)
     note_speed_box.pack()
     
+    num_lanes_label = tk.Label(settings_screen, text="choose num_lanes: ", font=("Arial", 24))
+    num_lanes_label.pack()
+    num_lanes_box = tk.Entry(settings_screen)
+    num_lanes_box.pack()
+    
     def write_text_file():
         note_speed = note_speed_box.get()
         fps = fps_box.get()
+        num_lanes = num_lanes_box.get()
         
         with open("settings_vars.txt", "w") as vars:
             try:
-                vars.write(f"{int(fps)} {int(note_speed)}")
+                vars.write(f"{int(fps)} {int(note_speed)} {int(num_lanes)}")
             except ValueError:
                 print("MUST BE INTEGER")
 

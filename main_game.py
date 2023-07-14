@@ -6,7 +6,7 @@ import cv2 as cv
 import mediapipe as mp
 
 
-wav_file_name = "message_bottle"
+wav_file_name = "pasoori"
 
 def run():
     # Setup
@@ -18,10 +18,6 @@ def run():
     screen_height = 1024
     screen = pygame.display.set_mode((screen_width,screen_height), vsync=1)
     pygame.display.set_caption('NEA Rhythm Game')
-
-    # Initialising lanes
-    lanes = 6
-    lane_size = screen_width//lanes
     
     @dataclass
     class Lane:
@@ -35,15 +31,19 @@ def run():
         # Initialising class variables
         note_group = pygame.sprite.Group() # Contains all the note objects
         # Initialising speed
-        speed = 5
+        speed = 15
+        # Initialising lanes
+        lanes = 6
+        lane_size = screen_width//lanes
 
         # Initialising arrays to keep track of lanes and keys
         right_hand_keys = "hjklyuio"
         left_hand_keys = "fdsarewq"
-        note_keys = [eval(f"pygame.K_{key}") for key in left_hand_keys[:lanes//2][::-1] + right_hand_keys[:lanes//2]]
+        note_keys = []
         
         # Creates Lane instances for each lane
-        lane_tracker = [Lane(lane_size*num_lanes, queue.Queue(), key) for num_lanes, key in zip(range(lanes), note_keys)]
+        lane_tracker = []
+        
         
         # Note calculations
         note_width = lane_size
@@ -69,6 +69,14 @@ def run():
             
             self.add_to_group() # Adding to sprite group
             self.add_to_queue() # Adding to queue
+        
+        def init_lane_tracker():
+            Note.lane_size = screen_width//Note.lanes
+            Note.note_width = Note.lane_size
+            Note.note_keys = [eval(f"pygame.K_{key}") for key in Note.left_hand_keys[:Note.lanes//2][::-1] + Note.right_hand_keys[:Note.lanes//2]]
+            Note.lane_tracker = [Lane(Note.lane_size*lane_num, queue.Queue(), key) for lane_num, key in zip(range(Note.lanes), Note.note_keys)]
+            
+            print(Note.lanes, Note.lane_tracker)
         
         # Randomly selects an array value
         def get_random_lane() -> Lane:
@@ -96,9 +104,9 @@ def run():
             
             current_time = pygame.time.get_ticks() # Checks if any of the notes are inbetween this tick and the previous tick
             accepted_times = np.asarray(list(range(current_time - clock.get_time(), current_time))) # Creates an array of a range of times that the note can be in
-            matched_elements = np.isin(Note.note_times, accepted_times) # Creates an array of booleans of whether an element matches another
+            matched_elements = np.isin(Note.note_times-(screen_height*0.8)//(Note.speed/30), accepted_times) # Creates an array of booleans of whether an element matches another
             Note.generate_notes(np.count_nonzero(matched_elements)) # Generates the same number of notes as the matched elements
-                 
+            print(screen_height/(Note.speed/30))
                  
         def kill_note_pressed():
             # Iterates through each lane and checks if their key is being pressed
@@ -112,7 +120,7 @@ def run():
         def note_movement():
             # Iterates through the sprite group and adds a fixed speed to their y value
             for sprite in Note.note_group.sprites():
-                sprite.rect.y += Note.speed
+                sprite.rect.y += Note.speed/30 * clock.get_time()
                 
                 # Kills the note if it goes off screen
                 if sprite.rect.y > screen_height:
@@ -187,10 +195,12 @@ def run():
         
         def read_vars():
             with open("settings_vars.txt", "r") as vars:
-                GameManager.fps, Note.speed = [int(x) for x in vars.readline().split()]
+                GameManager.fps, Note.speed, Note.lanes = [int(x) for x in vars.readline().split()]
+                return GameManager.fps, Note.speed, Note.lanes
         
     # Initialising variables
     GameManager.read_vars()
+    Note.init_lane_tracker()
     GameManager.start_playback()
     
     '''---------------Main game loop------------------'''
