@@ -106,7 +106,7 @@ def run():
             accepted_times = np.asarray(list(range(current_time - clock.get_time(), current_time))) # Creates an array of a range of times that the note can be in
             matched_elements = np.isin(Note.note_times-(screen_height*0.8)//(Note.speed/30), accepted_times) # Creates an array of booleans of whether an element matches another
             Note.generate_notes(np.count_nonzero(matched_elements)) # Generates the same number of notes as the matched elements
-            print(screen_height/(Note.speed/30))
+            print(f"fps_offset: {(screen_height*0.8)//(Note.speed/30)}")
                  
         def kill_note_pressed():
             # Iterates through each lane and checks if their key is being pressed
@@ -114,7 +114,23 @@ def run():
             for lane in Note.lane_tracker:
                 if event.key == lane.key:
                     if not lane.queue.empty():
-                        lane.queue.get().kill()
+                        sprite = lane.queue.get()
+                        Note.kill_note(sprite)
+                        
+        def kill_note(sprite):
+            Note.determine_points(sprite)
+            sprite.kill()
+
+        def determine_points(sprite):
+            points_rect = pygame.rect.Rect(0, screen_height*0.68, screen_width, 200)
+            if points_rect.contains(sprite):
+                GameManager.score += 2
+            elif points_rect.colliderect(sprite):
+                GameManager.score += 1
+                
+        def draw_points_rect():
+            points_rect = pygame.rect.Rect(0, screen_height*0.68, screen_width, 200)
+            pygame.draw.rect(screen, (255,0,0), points_rect)
 
         # Makes every note in the sprite group move down at a consistant speed    
         def note_movement():
@@ -144,35 +160,41 @@ def run():
             rgb_img = cv.flip(rgb_img, 1)
             results = HandTracking.hands.process(rgb_img)
 
-            return results.multi_hand_landmarks           
-    
+            return results.multi_hand_landmarks
+
         def landmark_iteration():
+            
+            if GameManager.gamemode == "no_hands":
+                return
+            
             hand_landmarks = HandTracking.get_hand_landmarks()
 
+            # Iterating through hand landmarks
             if hand_landmarks:
                 for hand in hand_landmarks:
                     index_finger = hand.landmark[8]
                     
                     for lm in hand.landmark:
-                        centre_x = lm.x*screen_width
+                        centre_x = lm.x*screen_width # adjusting for different scale
                         centre_y = lm.y*screen_height
                         
                         if HandTracking.fixed_y:
                             y_offset = index_finger.y*screen_height - HandTracking.fixed_y_coord
-                            centre_y -= y_offset
+                            centre_y -= y_offset # Adjusting y coordinate for offset
                             
                         pygame.draw.circle(screen, (255, 0, 255), (centre_x, centre_y), 5)                     
                     HandTracking.hand_collision(index_finger)
 
         def hand_collision(index_finger):
-            for note in Note.note_group.sprites():
-                index_x, index_y = index_finger.x*screen_width, index_finger.y*screen_height
-                
+            
+            index_x, index_y = index_finger.x*screen_width, index_finger.y*screen_height # Getting coords of index finger
+
+            for note in Note.note_group.sprites():                
                 if HandTracking.fixed_y:
                     index_y = HandTracking.fixed_y_coord
 
                 if note.rect.collidepoint((index_x, index_y)):
-                    note.kill()
+                    Note.kill_note(note)
                     note.lane.queue.get()
         
 
@@ -183,11 +205,21 @@ def run():
         
         # Loading background image
         bg_image = pygame.image.load("bg_images/notes_falling.jpg") # Loading bg image
+        
+        gamemode = ""
+        
+        score = 0
 
         # Blits the background image onto the screen at coords (0,0) - top left
         def render_background():
             screen.blit(GameManager.bg_image, (0, 0))
-        
+            
+        def render_score():
+            score_font = pygame.font.Font("freesansbold.ttf", 80)
+            score_text = score_font.render(str(GameManager.score), True, (255, 0, 0), None)
+            score_rect = score_text.get_rect(center = (100, 100))
+            screen.blit(score_text, score_rect)
+ 
         def start_playback():
             # Starting playback of song
             wave_obj = sa.WaveObject.from_wave_file(f"wav_files/{wav_file_name}.wav")
@@ -195,8 +227,11 @@ def run():
         
         def read_vars():
             with open("settings_vars.txt", "r") as vars:
-                GameManager.fps, Note.speed, Note.lanes = [int(x) for x in vars.readline().split()]
-                return GameManager.fps, Note.speed, Note.lanes
+                GameManager.fps, Note.speed, Note.lanes = [int(x) for x in vars.readline().split()[:3]] # Setting variables
+                vars.seek(0) # Setting pointer to start
+                GameManager.gamemode = vars.readline().split()[-1] # Getting gamemode
+                HandTracking.fixed_y = True if GameManager.gamemode == "fixed_hands" else False
+
         
     # Initialising variables
     GameManager.read_vars()
@@ -215,7 +250,10 @@ def run():
             if event.type == pygame.KEYDOWN:
                 Note.kill_note_pressed()
 
+
         GameManager.render_background()
+        Note.draw_points_rect()
+        GameManager.render_score()
         HandTracking.landmark_iteration()
         Note.generate_timed_notes(clock)
         Note.note_movement()

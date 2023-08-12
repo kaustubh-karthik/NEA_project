@@ -9,7 +9,6 @@ screen.title("main menu gui")
 def run():
     main_menu = tk.Frame(screen)
     main_menu.pack()
-    main_menu.grid(row=0, column=0)
 
     bg_image = tk.PhotoImage(file = "bg_images/notes_falling_golden.png")
     bg_label = tk.Label(main_menu, image=bg_image)
@@ -44,14 +43,21 @@ def run():
     num_lanes_box = tk.Entry(settings_screen)
     num_lanes_box.pack()
     
+    gamemodes = ["fixed_hands", "freehands", "no_hands"]
+    gamemode_var = tk.StringVar()
+    gamemode_var.set(gamemodes[0])
+    gamemode_selector = tk.OptionMenu(settings_screen, gamemode_var, *gamemodes)
+    gamemode_selector.pack()
+    
     def write_text_file():
         note_speed = note_speed_box.get()
         fps = fps_box.get()
         num_lanes = num_lanes_box.get()
+        selected_gamemode = gamemode_var.get()
         
         with open("settings_vars.txt", "w") as vars:
             try:
-                vars.write(f"{int(fps)} {int(note_speed)} {int(num_lanes)}")
+                vars.write(f"{int(fps)} {int(note_speed)} {int(num_lanes)} {selected_gamemode}")
             except ValueError:
                 print("MUST BE INTEGER")
 
