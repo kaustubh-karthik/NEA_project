@@ -115,11 +115,12 @@ def run():
                 if event.key == lane.key:
                     if not lane.queue.empty():
                         sprite = lane.queue.get()
-                        Note.kill_note(sprite)
-                        
-        def kill_note(sprite):
-            Note.determine_points(sprite)
-            sprite.kill()
+                        sprite.kill_self()
+        
+        # Function that handles killing the sprites
+        def kill_self(self):
+            Note.determine_points(self)
+            self.kill()
 
         def determine_points(sprite):
             points_rect = pygame.rect.Rect(0, screen_height*0.68, screen_width, 200)
@@ -194,7 +195,7 @@ def run():
                     index_y = HandTracking.fixed_y_coord
 
                 if note.rect.collidepoint((index_x, index_y)):
-                    Note.kill_note(note)
+                    note.kill_self()
                     note.lane.queue.get()
         
 
